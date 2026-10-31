@@ -16,3 +16,14 @@ sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -subj "/CN=devops.local" \
   -addext "subjectAltName=DNS:devops.local"
 ```
+
+## 9. Контейнеризация
+
+- **Способ установки Docker Engine**: установка официальных пакетов Docker Engine из репозитория download.docker.com (`docker-ce`, `docker-ce-cli`, `containerd.io`, `docker-buildx-plugin`, `docker-compose-plugin`). Дистрибутивный пакет `docker.io` исключён.
+- **Версия Docker**: Docker Engine Community, Docker Compose v2.
+- **Пользователи**: учётная запись `devops` добавлена в группу `docker` (доступ без `sudo`).
+- **Расположение проекта на сервере**: `/home/devops/app` (приложение на Flask, Gunicorn, Dockerfile, docker-compose.yml).
+- **Конфигурация окружения (.env)**: расположен в `/home/devops/app/.env` с правами доступа `600` (чтение/запись только пользователю devops). Исключён из git (`.gitignore`) и rsync (`--exclude=.env`).
+- **Сетевая публикация портов**: порт веб-приложения привязан исключительно к петлевому интерфейсу хоста `127.0.0.1:5000:5000`; порт PostgreSQL `5432` не опубликован наружу и доступен только внутри сети `backend`.
+- **Именованные тома**: `db_data` смонтирован в каталог `/var/lib/postgresql/data` контейнера базы данных для персистентного хранения данных между перезапусками Compose.
+- **Обратный прокси-сервер**: Nginx (`/etc/nginx/sites-available/devops-site`) терминирует HTTPS на порту 443 и проксирует запросы `/app/` на `http://127.0.0.1:5000/`.
